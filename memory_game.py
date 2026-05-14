@@ -72,7 +72,8 @@ pairs = []  # заповнюється в new_game()
 # ─────────────────────────────────────────────
 
 def new_game():
- """Починає нову гру: перемішує картки, скидає стан, запускає таймер."""
+    """Починає нову гру: перемішує картки, скидає стан, запускає таймер."""
+
     global pairs
 
     # скасовуємо попередній таймер якщо є
@@ -94,9 +95,34 @@ def new_game():
     # оновлюємо поле
     canvas.delete("all")
     redraw_all()
+    # запускаємо таймер
+    tick()
 
+# ─────────────────────────────────────────────
+# ТАЙМЕР
+# ─────────────────────────────────────────────
 def tick():
-   pass
+        """Щосекундно зменшує лічильник часу."""
+        if state["game_over"]:
+            return
+
+        # оновлюємо підпис
+        secs = state["time_left"]
+        mins = secs // 60
+        sec_part = secs % 60
+        label_timer.config(
+            text=f"⏱ {mins:01d}:{sec_part:02d}",
+            fg=TIMER_WARN if secs <= TIMER_WARN_SECS else TIMER_COLOR
+        )
+        if secs == 0:
+            # час вийшов!
+            state["game_over"] = True
+            state["locked"] = True
+            show_overlay("⏰ Час вийшов!", "#d32f2f")
+            return
+
+        state["time_left"] -= 1
+        state["timer_id"] = root.after(1000, tick)
 
 def draw_card(idx, color):
     pass
