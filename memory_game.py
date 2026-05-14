@@ -72,7 +72,28 @@ pairs = []  # заповнюється в new_game()
 # ─────────────────────────────────────────────
 
 def new_game():
-    pass
+ """Починає нову гру: перемішує картки, скидає стан, запускає таймер."""
+    global pairs
+
+    # скасовуємо попередній таймер якщо є
+    if state["timer_id"] is not None:
+        root.after_cancel(state["timer_id"])
+
+    # скидаємо стан
+    state["open"]      = [False] * TOTAL_CARDS
+    state["first"]     = None
+    state["locked"]    = False
+    state["time_left"] = TIMER_SECONDS
+    state["game_over"] = False
+
+    # перемішуємо символи
+    selected = SYMBOLS[: TOTAL_CARDS // 2]  # рівно половина — унікальні символи
+    pairs = selected * 2                     # кожен символ зустрічається двічі
+    random.shuffle(pairs)
+
+    # оновлюємо поле
+    canvas.delete("all")
+    redraw_all()
 
 def tick():
    pass
