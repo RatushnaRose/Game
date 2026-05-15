@@ -37,7 +37,7 @@ def draw_card(idx, color):
 
 
 def redraw_all():
-    """Перемалювати всі картки відповідно до поточного стану."""
+    # Перемалювати всі картки відповідно до поточного стану.
     for i in range(TOTAL_CARDS):
         if state["matched"][i]:
             draw_card(i, CARD_MATCHED_COLOR)
