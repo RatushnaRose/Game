@@ -4,7 +4,7 @@
 
 
 def draw_card(idx, color):
-    """Намалювати картку з заданим кольором за її індексом."""
+    # Намалювати картку з заданим кольором за її індексом.
     pass
     row = idx // GRID_COLS
     col = idx %  GRID_COLS
@@ -37,8 +37,7 @@ def draw_card(idx, color):
 
 
 def redraw_all():
-   pass
-    """Перемалювати всі картки відповідно до поточного стану."""
+    # Перемалювати всі картки відповідно до поточного стану.
     for i in range(TOTAL_CARDS):
         if state["matched"][i]:
             draw_card(i, CARD_MATCHED_COLOR)
@@ -49,7 +48,7 @@ def redraw_all():
 
 
 def show_overlay(message, color):
-    """Показує повідомлення посередині поля (перемога або час вийшов)."""
+    # Показує повідомлення посередині поля (перемога або час вийшов).
     pass
     cx = CANVAS_W // 2
     cy = CANVAS_H // 2
