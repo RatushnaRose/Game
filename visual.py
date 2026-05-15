@@ -5,7 +5,6 @@
 
 def draw_card(idx, color):
     # Намалювати картку з заданим кольором за її індексом.
-    pass
     row = idx // GRID_COLS
     col = idx %  GRID_COLS
 
@@ -49,7 +48,6 @@ def redraw_all():
 
 def show_overlay(message, color):
     # Показує повідомлення посередині поля (перемога або час вийшов).
-    pass
     cx = CANVAS_W // 2
     cy = CANVAS_H // 2
     canvas.create_rectangle(cx - 170, cy - 55, cx + 170, cy + 55,
