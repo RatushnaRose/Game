@@ -1,5 +1,6 @@
 import tkinter as tk
 import random
+import visual
 
 # ─────────────────────────────────────────────
 # НАЛАШТУВАННЯ ГРИ — змінюй тут
