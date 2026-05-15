@@ -1,6 +1,5 @@
 import tkinter as tk
 import random
-import visual
 
 # ─────────────────────────────────────────────
 # НАЛАШТУВАННЯ ГРИ — змінюй тут
@@ -74,7 +73,6 @@ pairs = []  # заповнюється в new_game()
 
 def new_game():
     """Починає нову гру: перемішує картки, скидає стан, запускає таймер."""
-
     global pairs
 
     # скасовуємо попередній таймер якщо є
@@ -83,6 +81,7 @@ def new_game():
 
     # скидаємо стан
     state["open"]      = [False] * TOTAL_CARDS
+    state["matched"]   = [False] * TOTAL_CARDS
     state["first"]     = None
     state["locked"]    = False
     state["time_left"] = TIMER_SECONDS
@@ -96,60 +95,193 @@ def new_game():
     # оновлюємо поле
     canvas.delete("all")
     redraw_all()
+
     # запускаємо таймер
     tick()
+
 
 # ─────────────────────────────────────────────
 # ТАЙМЕР
 # ─────────────────────────────────────────────
+
 def tick():
-        """Щосекундно зменшує лічильник часу."""
-        if state["game_over"]:
-            return
+    """Щосекундно зменшує лічильник часу."""
+    if state["game_over"]:
+        return
 
-        # оновлюємо підпис
-        secs = state["time_left"]
-        mins = secs // 60
-        sec_part = secs % 60
-        label_timer.config(
-            text=f"⏱ {mins:01d}:{sec_part:02d}",
-            fg=TIMER_WARN if secs <= TIMER_WARN_SECS else TIMER_COLOR
-        )
-        if secs == 0:
-            # час вийшов!
-            state["game_over"] = True
-            state["locked"] = True
-            show_overlay("⏰ Час вийшов!", "#d32f2f")
-            return
+    # оновлюємо підпис
+    secs = state["time_left"]
+    mins = secs // 60
+    sec_part = secs % 60
+    label_timer.config(
+        text=f"⏱ {mins:01d}:{sec_part:02d}",
+        fg=TIMER_WARN if secs <= TIMER_WARN_SECS else TIMER_COLOR
+    )
 
-        state["time_left"] -= 1
-        state["timer_id"] = root.after(1000, tick)
+    if secs <= 0:
+        # час вийшов!
+        state["game_over"] = True
+        state["locked"]    = True
+        show_overlay("⏰ Час вийшов!", "#d32f2f")
+        return
+
+    state["time_left"] -= 1
+    state["timer_id"] = root.after(1000, tick)  # наступний тік через 1 секунду
+
+
+# ─────────────────────────────────────────────
+# ФУНКЦІЇ МАЛЮВАННЯ
+# ─────────────────────────────────────────────
 
 def draw_card(idx, color):
-    pass
+    """Намалювати картку з заданим кольором за її індексом."""
+    row = idx // GRID_COLS
+    col = idx %  GRID_COLS
+
+    x1 = CARD_GAP + col * (CARD_SIZE + CARD_GAP)
+    y1 = CARD_GAP + row * (CARD_SIZE + CARD_GAP)
+    x2 = x1 + CARD_SIZE
+    y2 = y1 + CARD_SIZE
+
+    canvas.delete(f"card_{idx}")
+
+    if CARD_SHAPE == "oval":
+        canvas.create_oval(x1, y1, x2, y2,
+                           fill=color, outline=CARD_OUTLINE, width=2,
+                           tags=f"card_{idx}")
+    else:
+        canvas.create_rectangle(x1, y1, x2, y2,
+                                fill=color, outline=CARD_OUTLINE, width=2,
+                                tags=f"card_{idx}")
+
+    # показуємо символ тільки для відкритих або знайдених карток
+    if state["open"][idx] or state["matched"][idx]:
+        cx = (x1 + x2) // 2
+        cy = (y1 + y2) // 2
+        canvas.create_text(cx, cy,
+                           text=pairs[idx],
+                           font=(FONT_NAME, FONT_SIZE),
+                           fill=FONT_COLOR,
+                           tags=f"card_{idx}")
+
 
 def redraw_all():
-   pass
+    """Перемалювати всі картки відповідно до поточного стану."""
+    for i in range(TOTAL_CARDS):
+        if state["matched"][i]:
+            draw_card(i, CARD_MATCHED_COLOR)
+        elif state["open"][i]:
+            draw_card(i, CARD_OPEN_COLOR)
+        else:
+            draw_card(i, CARD_COLOR)
 
 
 def show_overlay(message, color):
-    pass
+    """Показує повідомлення посередині поля (перемога або час вийшов)."""
+    cx = CANVAS_W // 2
+    cy = CANVAS_H // 2
+    canvas.create_rectangle(cx - 170, cy - 55, cx + 170, cy + 55,
+                             fill="#fce4ec", outline=color, width=4,
+                             tags="overlay")
+    canvas.create_text(cx, cy - 12,
+                        text=message,
+                        font=("Arial", 18, "bold"),
+                        fill=color,
+                        tags="overlay")
+    canvas.create_text(cx, cy + 28,
+                        text='Натисни "Нова гра" для перезапуску',
+                        font=("Arial", 11),
+                        fill="#880e4f",
+                        tags="overlay")
+
+
+# ─────────────────────────────────────────────
+# ЛОГІКА ГРИ
+# ─────────────────────────────────────────────
 
 def get_card_idx(x, y):
-    pass
+    """Повертає індекс картки за координатами миші, або None."""
+    for i in range(TOTAL_CARDS):
+        row = i // GRID_COLS
+        col = i %  GRID_COLS
+        x1 = CARD_GAP + col * (CARD_SIZE + CARD_GAP)
+        y1 = CARD_GAP + row * (CARD_SIZE + CARD_GAP)
+        x2 = x1 + CARD_SIZE
+        y2 = y1 + CARD_SIZE
+        if x1 <= x <= x2 and y1 <= y <= y2:
+            return i
+    return None
 
 
 def on_click(event):
-    pass
+    """Обробник лівого кліку — відкриває картку."""
+    if state["locked"] or state["game_over"]:
+        return
+
+    idx = get_card_idx(event.x, event.y)
+    if idx is None:
+        return
+    if state["matched"][idx] or state["open"][idx]:
+        return
+
+    state["open"][idx] = True
+    draw_card(idx, CARD_OPEN_COLOR)
+
+    if state["first"] is None:
+        # перша картка ходу
+        state["first"] = idx
+    else:
+        # друга картка — перевіряємо пару
+        first = state["first"]
+        state["first"] = None
+        state["locked"] = True
+
+        if pairs[first] == pairs[idx]:
+            # пара знайдена!
+            state["matched"][first] = True
+            state["matched"][idx]   = True
+            state["open"][first]    = False
+            state["open"][idx]      = False
+            state["locked"]         = False
+            draw_card(first, CARD_MATCHED_COLOR)
+            draw_card(idx,   CARD_MATCHED_COLOR)
+            check_win()
+        else:
+            # пара не збіглась — перевернути назад через затримку
+            root.after(FLIP_DELAY, lambda: flip_back(first, idx))
+
 
 def flip_back(first, second):
-   pass
+    """Перевертає дві картки назад після невдалої спроби."""
+    state["open"][first]  = False
+    state["open"][second] = False
+    state["locked"]       = False
+    draw_card(first,  CARD_COLOR)
+    draw_card(second, CARD_COLOR)
+
 
 def check_win():
-    pass
+    """Перевіряє, чи гра закінчена."""
+    if all(state["matched"]):
+        state["game_over"] = True
+        # зупиняємо таймер
+        if state["timer_id"] is not None:
+            root.after_cancel(state["timer_id"])
+        show_overlay("♥ Вітаємо! Ви перемогли! ♥", "#880e4f")
+
 
 def on_hover(event):
-    pass
+    """Підсвічує картку при наведенні миші."""
+    if state["locked"] or state["game_over"]:
+        return
+
+    idx = get_card_idx(event.x, event.y)
+    for i in range(TOTAL_CARDS):
+        if state["matched"][i] or state["open"][i]:
+            continue
+        draw_card(i, CARD_HOVER_COLOR if i == idx else CARD_COLOR)
+
+
 
 # ─────────────────────────────────────────────
 # ПОБУДОВА ВІКНА
