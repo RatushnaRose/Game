@@ -115,14 +115,29 @@ def get_card_idx(x, y):
 def on_click(event):
     pass
 
-def flip_back(first, second):
-   pass
+def flip_back(f, s):
+    state["open"][f] = state["open"][s] = False
+    state["locked"] = False
+    draw_card(f, CARD_COLOR);
+    draw_card(s, CARD_COLOR)
 
 def check_win():
-    pass
+    """Перевіряє, чи гра закінчена."""
+    if all(state["matched"]):
+        state["game_over"] = True
+        # зупиняємо таймер
+        if state["timer_id"] is not None:
+            root.after_cancel(state["timer_id"])
+        show_overlay("♥️ Вітаємо! Ви перемогли! ♥️", "#880e4f")
 
 def on_hover(event):
-    pass
+    if state["locked"] or state["game_over"]:
+        return
+
+    idx = get_card_idx(event.x, event.y)
+    for i in range(TOTAL_CARDS):
+        if not (state["matched"][i] or state["open"][i]):
+            draw_card(i, CARD_HOVER_COLOR if i == idx else CARD_COLOR)
 
 # ─────────────────────────────────────────────
 # ПОБУДОВА ВІКНА
